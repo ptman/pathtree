@@ -121,7 +121,7 @@ func BenchmarkTree100(b *testing.B) {
 	// b.Logf("Adding /public/*filepath")
 
 	queries := map[string]string{
-		"/": "root",
+		"/":                                 "root",
 		"/dir0/dir1/dir2/dir3/resource4":    "literal",
 		"/dir0/dir1/resource97":             "literal",
 		"/dir0/variable":                    "var",
@@ -146,19 +146,23 @@ func BenchmarkTree100(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N/len(queries); i++ {
-		for k, _ := range queries {
+		for k := range queries {
 			n.Find(k)
 		}
 	}
 }
 
 func notfound(t *testing.T, n *Node, p string) {
+	t.Helper()
+
 	if leaf, _ := n.Find(p); leaf != nil {
 		t.Errorf("Should not have found: %s", p)
 	}
 }
 
 func found(t *testing.T, n *Node, p string, expectedExpansions []string, val interface{}) {
+	t.Helper()
+
 	leaf, expansions := n.Find(p)
 	if leaf == nil {
 		t.Errorf("Didn't find: %s", p)
@@ -173,6 +177,8 @@ func found(t *testing.T, n *Node, p string, expectedExpansions []string, val int
 }
 
 func fails(t *testing.T, err error, msg string) {
+	t.Helper()
+
 	if err == nil {
 		t.Errorf("expected an error. %s", msg)
 	}

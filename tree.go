@@ -36,8 +36,21 @@
 package pathtree
 
 import (
-	"errors"
 	"strings"
+)
+
+// Error is used for constant errors.
+type Error string
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return string(e)
+}
+
+const (
+	ErrPathBegin     Error = "path must begin with /"
+	ErrDuplicatePath Error = "duplicate path"
+	ErrEmpty         Error = "empty path elements are not allowed"
 )
 
 type Node struct {
@@ -66,7 +79,7 @@ func New() *Node {
 // Returns an error if those conditions do not hold.
 func (n *Node) Add(key string, val interface{}) error {
 	if key == "" || key[0] != '/' {
-		return errors.New("Path must begin with /")
+		return ErrPathBegin
 	}
 	n.leafs++
 	return n.add(n.leafs, splitPath(key), nil, val)
@@ -81,14 +94,14 @@ func (n *Node) addLeaf(leaf *Leaf) error {
 			n.extensions = make(map[string]*Leaf)
 		}
 		if n.extensions[extension] != nil {
-			return errors.New("duplicate path")
+			return ErrDuplicatePath
 		}
 		n.extensions[extension] = leaf
 		return nil
 	}
 
 	if n.leaf != nil {
-		return errors.New("duplicate path")
+		return ErrDuplicatePath
 	}
 	n.leaf = leaf
 	return nil
@@ -107,7 +120,7 @@ func (n *Node) add(order int, elements, wildcards []string, val interface{}) err
 	var el string
 	el, elements = elements[0], elements[1:]
 	if el == "" {
-		return errors.New("empty path elements are not allowed")
+		return ErrEmpty
 	}
 
 	// Handle wildcards.
@@ -119,7 +132,7 @@ func (n *Node) add(order int, elements, wildcards []string, val interface{}) err
 		return n.wildcard.add(order, elements, append(wildcards, el[1:]), val)
 	case '*':
 		if n.star != nil {
-			return errors.New("duplicate path")
+			return ErrDuplicatePath
 		}
 		n.star = &Leaf{
 			order:     order,
